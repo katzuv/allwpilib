@@ -88,7 +88,7 @@ class CommandDecoratorTest extends CommandTestBase {
     }
   }
 
-@Test
+  @Test
   void thenAwaitTest() {
     try (CommandScheduler scheduler = new CommandScheduler()) {
       AtomicBoolean finish = new AtomicBoolean();
