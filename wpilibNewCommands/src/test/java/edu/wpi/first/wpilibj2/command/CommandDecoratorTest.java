@@ -88,6 +88,48 @@ class CommandDecoratorTest extends CommandTestBase {
     }
   }
 
+@Test
+  void thenAwaitTest() {
+    try (CommandScheduler scheduler = new CommandScheduler()) {
+      AtomicBoolean finish = new AtomicBoolean();
+
+      Command command = new RunCommand(() -> {}).thenAwait(finish::get);
+
+      scheduler.schedule(command);
+      scheduler.run();
+
+      assertTrue(scheduler.isScheduled(command));
+
+      finish.set(true);
+      scheduler.run();
+
+      assertFalse(scheduler.isScheduled(command));
+    }
+  }
+
+  @Test
+  @ResourceLock("timing")
+  void awaitTimeoutTest() {
+    HAL.initialize(500, 0);
+    SimHooks.pauseTiming();
+    try (CommandScheduler scheduler = new CommandScheduler()) {
+      Command awaitTimeout = new RunCommand(() -> {}).thenAwaitTimeout(0.1);
+
+      scheduler.schedule(awaitTimeout);
+      scheduler.run();
+
+      assertTrue(scheduler.isScheduled(awaitTimeout));
+
+      SimHooks.stepTiming(0.15);
+      scheduler.run();
+
+      assertFalse(scheduler.isScheduled(awaitTimeout));
+    } finally {
+      SimHooks.resumeTiming();
+    }
+  }
+
+
   @Test
   void onlyWhileTest() {
     try (CommandScheduler scheduler = new CommandScheduler()) {
