@@ -218,8 +218,8 @@ public abstract class Command implements Sendable {
   }
 
     /**
-   * Decorates this command with a timeout to pass for after this command is finished. The command will finish after
-   * this timeout has passed.
+   * Decorates this command with a time to pass after this command is finished. The command will finish after
+   * this time has passed.
    *
    * <p>Note: This decorator works by adding this command to a composition. The command the
    * decorator was called on cannot be scheduled independently or be added to a different
@@ -228,9 +228,9 @@ public abstract class Command implements Sendable {
    * returned from this method can be further decorated without issue.
    *
    * @param seconds the timeout duration
-   * @return the command with the timeout to await
+   * @return the command with the time to wait
    */
-  public SequentialCommandGroup thenAwaitTimeout(double seconds) {
+  public SequentialCommandGroup thenWait(double seconds) {
     return andThen(Commands.waitSeconds(seconds));
   }
 
@@ -247,8 +247,8 @@ public abstract class Command implements Sendable {
    * @param time the timeout duration
    * @return the command with the timeout to await
    */
-  public SequentialCommandGroup thenAwaitTimeout(Time time) {
-    return thenAwaitTimeout(time.in(Seconds));
+  public SequentialCommandGroup thenWait(Time time) {
+    return thenWait(time.in(Seconds));
   }
 
 
