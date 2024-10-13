@@ -129,7 +129,6 @@ class CommandDecoratorTest extends CommandTestBase {
     }
   }
 
-
   @Test
   void onlyWhileTest() {
     try (CommandScheduler scheduler = new CommandScheduler()) {

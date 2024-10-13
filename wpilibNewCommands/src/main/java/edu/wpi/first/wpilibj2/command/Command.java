@@ -201,8 +201,8 @@ public abstract class Command implements Sendable {
   }
 
   /**
-   * Decorates this command with a condition to wait for after this command is finished. The command will finish after
-   * this condition is met.
+   * Decorates this command with a condition to wait for after this command is finished. The command
+   * will finish after this condition is met.
    *
    * <p>Note: This decorator works by adding this command to a composition. The command the
    * decorator was called on cannot be scheduled independently or be added to a different
@@ -217,9 +217,9 @@ public abstract class Command implements Sendable {
     return andThen(Commands.waitUntil(condition));
   }
 
-    /**
-   * Decorates this command with a time to pass after this command is finished. The command will finish after
-   * this time has passed.
+  /**
+   * Decorates this command with a time to pass after this command is finished. The command will
+   * finish after this time has passed.
    *
    * <p>Note: This decorator works by adding this command to a composition. The command the
    * decorator was called on cannot be scheduled independently or be added to a different
@@ -234,9 +234,9 @@ public abstract class Command implements Sendable {
     return andThen(Commands.waitSeconds(seconds));
   }
 
-      /**
-   * Decorates this command with a timeout to pass for after this command is finished. The command will finish after
-   * this timeout has passed.
+  /**
+   * Decorates this command with a timeout to pass for after this command is finished. The command
+   * will finish after this timeout has passed.
    *
    * <p>Note: This decorator works by adding this command to a composition. The command the
    * decorator was called on cannot be scheduled independently or be added to a different
@@ -250,7 +250,6 @@ public abstract class Command implements Sendable {
   public SequentialCommandGroup thenWait(Time time) {
     return thenWait(time.in(Seconds));
   }
-
 
   /**
    * Decorates this command with a run condition. If the specified condition becomes false before
