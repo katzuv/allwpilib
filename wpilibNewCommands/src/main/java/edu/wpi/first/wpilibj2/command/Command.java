@@ -230,7 +230,7 @@ public abstract class Command implements Sendable {
    * @param seconds the timeout duration
    * @return the command with the time to wait
    */
-  public SequentialCommandGroup thenWait(double seconds) {
+  public SequentialCommandGroup andThenWaitSeconds(double seconds) {
     return andThen(Commands.waitSeconds(seconds));
   }
 

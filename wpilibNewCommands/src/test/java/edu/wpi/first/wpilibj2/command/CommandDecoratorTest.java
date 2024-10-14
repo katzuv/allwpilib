@@ -109,11 +109,11 @@ class CommandDecoratorTest extends CommandTestBase {
 
   @Test
   @ResourceLock("timing")
-  void thenWaitTest() {
+  void andThenWaitSecondsTest() {
     HAL.initialize(500, 0);
     SimHooks.pauseTiming();
     try (CommandScheduler scheduler = new CommandScheduler()) {
-      Command awaitTimeout = new RunCommand(() -> {}).thenWait(0.1);
+      Command awaitTimeout = new RunCommand(() -> {}).andThenWaitSeconds(0.1);
 
       scheduler.schedule(awaitTimeout);
       scheduler.run();
