@@ -202,7 +202,7 @@ public abstract class Command implements Sendable {
 
   /**
    * Decorates this command with a condition to wait for after this command is finished. The command
-   * will finish after this condition is met.
+   * will finish after the specified condition is met.
    *
    * <p>Note: This decorator works by adding this command to a composition. The command the
    * decorator was called on cannot be scheduled independently or be added to a different
