@@ -247,8 +247,8 @@ public abstract class Command implements Sendable {
    * @param time the timeout duration
    * @return the command with the timeout to await
    */
-  public SequentialCommandGroup thenWait(Time time) {
-    return thenWait(time.in(Seconds));
+  public SequentialCommandGroup andThenWaitTime(Time time) {
+    return andThenWaitSeconds(time.in(Seconds));
   }
 
   /**
