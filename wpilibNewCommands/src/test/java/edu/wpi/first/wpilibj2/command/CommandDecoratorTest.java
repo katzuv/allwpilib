@@ -89,11 +89,11 @@ class CommandDecoratorTest extends CommandTestBase {
   }
 
   @Test
-  void thenAwaitTest() {
+  void andThenWaitUntilTest() {
     try (CommandScheduler scheduler = new CommandScheduler()) {
       AtomicBoolean finish = new AtomicBoolean();
 
-      Command command = new RunCommand(() -> {}).thenAwait(finish::get);
+      Command command = new RunCommand(() -> {}).andThenWaitUntil(finish::get);
 
       scheduler.schedule(command);
       scheduler.run();

@@ -213,7 +213,7 @@ public abstract class Command implements Sendable {
    * @param condition the condition to wait for after this command is finished
    * @return the command with the condition to await
    */
-  public SequentialCommandGroup thenAwait(BooleanSupplier condition) {
+  public SequentialCommandGroup andThenWaitUntil(BooleanSupplier condition) {
     return andThen(Commands.waitUntil(condition));
   }
 
