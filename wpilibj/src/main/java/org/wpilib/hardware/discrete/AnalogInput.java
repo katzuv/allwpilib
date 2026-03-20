@@ -4,7 +4,7 @@
 
 package org.wpilib.hardware.discrete;
 
-import org.wpilib.hardware.hal.AnalogJNI;
+import org.wpilib.hardware.hal.AnalogInputJNI;
 import org.wpilib.hardware.hal.HAL;
 import org.wpilib.hardware.hal.SimDevice;
 import org.wpilib.util.sendable.Sendable;
@@ -27,10 +27,10 @@ public class AnalogInput implements Sendable, AutoCloseable {
    */
   @SuppressWarnings("this-escape")
   public AnalogInput(final int channel) {
-    AnalogJNI.checkAnalogInputChannel(channel);
+    AnalogInputJNI.checkAnalogInputChannel(channel);
     m_channel = channel;
 
-    m_port = AnalogJNI.initializeAnalogInputPort(channel);
+    m_port = AnalogInputJNI.initializeAnalogInputPort(channel);
 
     HAL.reportUsage("IO", channel, "AnalogInput");
     SendableRegistry.add(this, "AnalogInput", channel);
@@ -39,7 +39,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
   @Override
   public void close() {
     SendableRegistry.remove(this);
-    AnalogJNI.freeAnalogInputPort(m_port);
+    AnalogInputJNI.freeAnalogInputPort(m_port);
     m_port = 0;
     m_channel = 0;
   }
@@ -52,7 +52,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return A sample straight from this channel.
    */
   public int getValue() {
-    return AnalogJNI.getAnalogValue(m_port);
+    return AnalogInputJNI.getAnalogValue(m_port);
   }
 
   /**
@@ -66,7 +66,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return A sample from the oversample and average engine for this channel.
    */
   public int getAverageValue() {
-    return AnalogJNI.getAnalogAverageValue(m_port);
+    return AnalogInputJNI.getAnalogAverageValue(m_port);
   }
 
   /**
@@ -76,7 +76,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return A scaled sample straight from this channel.
    */
   public double getVoltage() {
-    return AnalogJNI.getAnalogVoltage(m_port);
+    return AnalogInputJNI.getAnalogVoltage(m_port);
   }
 
   /**
@@ -89,7 +89,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return A scaled sample from the output of the oversample and average engine for this channel.
    */
   public double getAverageVoltage() {
-    return AnalogJNI.getAnalogAverageVoltage(m_port);
+    return AnalogInputJNI.getAnalogAverageVoltage(m_port);
   }
 
   /**
@@ -101,7 +101,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return Least significant bit weight.
    */
   public long getLSBWeight() {
-    return AnalogJNI.getAnalogLSBWeight(m_port);
+    return AnalogInputJNI.getAnalogLSBWeight(m_port);
   }
 
   /**
@@ -113,7 +113,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return Offset constant.
    */
   public int getOffset() {
-    return AnalogJNI.getAnalogOffset(m_port);
+    return AnalogInputJNI.getAnalogOffset(m_port);
   }
 
   /**
@@ -132,7 +132,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @param bits The number of averaging bits.
    */
   public void setAverageBits(final int bits) {
-    AnalogJNI.setAnalogAverageBits(m_port, bits);
+    AnalogInputJNI.setAnalogAverageBits(m_port, bits);
   }
 
   /**
@@ -142,7 +142,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return The number of averaging bits.
    */
   public int getAverageBits() {
-    return AnalogJNI.getAnalogAverageBits(m_port);
+    return AnalogInputJNI.getAnalogAverageBits(m_port);
   }
 
   /**
@@ -152,7 +152,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @param bits The number of oversample bits.
    */
   public void setOversampleBits(final int bits) {
-    AnalogJNI.setAnalogOversampleBits(m_port, bits);
+    AnalogInputJNI.setAnalogOversampleBits(m_port, bits);
   }
 
   /**
@@ -163,7 +163,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return The number of oversample bits.
    */
   public int getOversampleBits() {
-    return AnalogJNI.getAnalogOversampleBits(m_port);
+    return AnalogInputJNI.getAnalogOversampleBits(m_port);
   }
 
   /**
@@ -175,7 +175,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @param samplesPerSecond The number of samples per second.
    */
   public static void setGlobalSampleRate(final double samplesPerSecond) {
-    AnalogJNI.setAnalogSampleRate(samplesPerSecond);
+    AnalogInputJNI.setAnalogSampleRate(samplesPerSecond);
   }
 
   /**
@@ -186,7 +186,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @return Sample rate.
    */
   public static double getGlobalSampleRate() {
-    return AnalogJNI.getAnalogSampleRate();
+    return AnalogInputJNI.getAnalogSampleRate();
   }
 
   /**
@@ -195,7 +195,7 @@ public class AnalogInput implements Sendable, AutoCloseable {
    * @param device simulated device handle
    */
   public void setSimDevice(SimDevice device) {
-    AnalogJNI.setAnalogInputSimDevice(m_port, device.getNativeHandle());
+    AnalogInputJNI.setAnalogInputSimDevice(m_port, device.getNativeHandle());
   }
 
   @Override
