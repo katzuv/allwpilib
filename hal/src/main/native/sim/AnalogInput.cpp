@@ -6,9 +6,9 @@
 
 #include "AnalogInternal.hpp"
 #include "HALInitializer.hpp"
-#include "HALInternal.hpp"
 #include "PortsInternal.hpp"
 #include "mockdata/AnalogInDataInternal.hpp"
+#include "wpi/hal/ErrorHandling.hpp"
 
 using namespace wpi::hal;
 
@@ -21,27 +21,20 @@ HAL_AnalogInputHandle HAL_InitializeAnalogInputPort(
     int32_t channel, const char* allocationLocation, int32_t* status) {
   wpi::hal::init::CheckInit();
   if (channel < 0 || channel >= kNumAnalogInputs) {
-    *status = RESOURCE_OUT_OF_RANGE;
-    wpi::hal::SetLastErrorIndexOutOfRange(
-        status, "Invalid Index for Analog Input", 0, kNumAnalogInputs, channel);
+    *status = MakeErrorIndexOutOfRange(RESOURCE_OUT_OF_RANGE,
+                                       "Invalid Index for Analog Input", 0,
+                                       kNumAnalogInputs, channel);
     return HAL_INVALID_HANDLE;
   }
 
-  HAL_AnalogInputHandle handle;
-  auto analog_port = analogInputHandles->Allocate(channel, &handle, status);
+  auto resource = analogInputHandles->Allocate(channel, "Analog");
 
-  if (*status != 0) {
-    if (analog_port) {
-      wpi::hal::SetLastErrorPreviouslyAllocated(
-          status, "Analog Input", channel, analog_port->previousAllocation);
-    } else {
-      wpi::hal::SetLastErrorIndexOutOfRange(status,
-                                            "Invalid Index for Analog Input", 0,
-                                            kNumAnalogInputs, channel);
-    }
+  if (!resource) {
+    *status = resource.error();
     return HAL_INVALID_HANDLE;  // failed to allocate. Pass error back.
   }
 
+  auto [handle, analog_port] = *resource;
   analog_port->channel = static_cast<uint8_t>(channel);
 
   SimAnalogInData[channel].initialized = true;
