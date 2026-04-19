@@ -4,7 +4,8 @@
 
 #include "Robot.hpp"
 
-#include "wpi/driverstation/DriverStation.hpp"
+#include "wpi/driverstation/RobotState.hpp"
+#include "wpi/driverstation/internal/DriverStationBackend.hpp"
 #include "wpi/hal/DriverStation.h"
 #include "wpi/internal/DriverStationModeThread.hpp"
 
@@ -22,19 +23,20 @@ void Robot::StartCompetition() {
   wpi::internal::DriverStationModeThread modeThread{wpi::hal::GetControlWord()};
 
   // Create an opmode per robot mode
-  wpi::DriverStation::AddOpMode(wpi::RobotMode::AUTONOMOUS, "Auto");
-  wpi::DriverStation::AddOpMode(wpi::RobotMode::TELEOPERATED, "Teleop");
-  wpi::DriverStation::AddOpMode(wpi::RobotMode::TEST, "Test");
-  wpi::DriverStation::PublishOpModes();
+  wpi::RobotState::AddOpMode(wpi::RobotMode::AUTONOMOUS, "Auto");
+  wpi::RobotState::AddOpMode(wpi::RobotMode::TELEOPERATED, "Teleop");
+  wpi::RobotState::AddOpMode(wpi::RobotMode::TEST, "Test");
+  wpi::RobotState::PublishOpModes();
 
   wpi::util::Event event{false, false};
-  wpi::DriverStation::ProvideRefreshedDataEventHandle(event.GetHandle());
+  wpi::internal::DriverStationBackend::ProvideRefreshedDataEventHandle(
+      event.GetHandle());
 
   // Tell the DS that the robot is ready to be enabled
-  wpi::DriverStation::ObserveUserProgramStarting();
+  wpi::internal::DriverStationBackend::ObserveUserProgramStarting();
 
   while (!m_exit) {
-    modeThread.InControl(wpi::DriverStation::GetControlWord());
+    modeThread.InControl(wpi::internal::DriverStationBackend::GetControlWord());
     if (IsDisabled()) {
       Disabled();
       while (IsDisabled()) {

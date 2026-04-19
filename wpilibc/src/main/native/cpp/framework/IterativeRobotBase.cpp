@@ -4,7 +4,8 @@
 
 #include "wpi/framework/IterativeRobotBase.hpp"
 
-#include "wpi/driverstation/DriverStation.hpp"
+#include "wpi/driverstation/RobotState.hpp"
+#include "wpi/driverstation/internal/DriverStationBackend.hpp"
 #include "wpi/hal/DriverStation.h"
 #include "wpi/hal/DriverStationTypes.h"
 #include "wpi/nt/NetworkTableInstance.hpp"
@@ -91,7 +92,7 @@ wpi::units::second_t IterativeRobotBase::GetPeriod() const {
 }
 
 void IterativeRobotBase::LoopFunc() {
-  DriverStation::RefreshData();
+  wpi::internal::DriverStationBackend::RefreshData();
   m_watchdog.Reset();
 
   // Get current mode; treat disabled as unknown

@@ -20,9 +20,11 @@ import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.wpilib.driverstation.Alert;
-import org.wpilib.driverstation.DriverStation;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.driverstation.RobotState;
 import org.wpilib.driverstation.UserControls;
 import org.wpilib.driverstation.UserControlsInstance;
+import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.hardware.hal.ControlWord;
 import org.wpilib.hardware.hal.DriverStationJNI;
 import org.wpilib.hardware.hal.HAL;
@@ -82,7 +84,8 @@ public abstract class OpModeRobot extends RobotBase {
   private final Alert m_loopOverrunAlert;
 
   private static void reportAddOpModeError(Class<?> cls, String message) {
-    DriverStation.reportError("Error adding OpMode " + cls.getSimpleName() + ": " + message, false);
+    DriverStationErrors.reportError(
+        "Error adding OpMode " + cls.getSimpleName() + ": " + message, false);
   }
 
   private final Optional<Class<? extends UserControls>> m_userControlsBaseClass;
@@ -142,7 +145,7 @@ public abstract class OpModeRobot extends RobotBase {
   private <T extends OpMode> T constructOpModeClass(Class<T> cls) {
     Optional<ConstructorMatch<T>> constructor = findOpModeConstructor(cls);
     if (constructor.isEmpty()) {
-      DriverStation.reportError(
+      DriverStationErrors.reportError(
           "No suitable constructor to instantiate OpMode " + cls.getSimpleName(), true);
       return null;
     }
@@ -153,7 +156,7 @@ public abstract class OpModeRobot extends RobotBase {
         return constructor.get().newInstance(this);
       }
     } catch (ReflectiveOperationException e) {
-      DriverStation.reportError(
+      DriverStationErrors.reportError(
           "Could not instantiate OpMode " + cls.getSimpleName(), e.getStackTrace());
       return null;
     }
@@ -207,7 +210,7 @@ public abstract class OpModeRobot extends RobotBase {
       String description,
       Color textColor,
       Color backgroundColor) {
-    long id = DriverStation.addOpMode(mode, name, group, description, textColor, backgroundColor);
+    long id = RobotState.addOpMode(mode, name, group, description, textColor, backgroundColor);
     m_opModes.put(id, new OpModeFactory(name, factory));
   }
 
@@ -355,7 +358,7 @@ public abstract class OpModeRobot extends RobotBase {
     }
     Color tColor = textColor.isBlank() ? null : Color.fromString(textColor);
     Color bColor = backgroundColor.isBlank() ? null : Color.fromString(backgroundColor);
-    long id = DriverStation.addOpMode(mode, name, group, description, tColor, bColor);
+    long id = RobotState.addOpMode(mode, name, group, description, tColor, bColor);
     m_opModes.put(id, new OpModeFactory(name, () -> constructOpModeClass(cls)));
   }
 
@@ -504,7 +507,7 @@ public abstract class OpModeRobot extends RobotBase {
    * @param name name of the operating mode
    */
   public void removeOpMode(RobotMode mode, String name) {
-    long id = DriverStation.removeOpMode(mode, name);
+    long id = RobotState.removeOpMode(mode, name);
     if (id != 0) {
       m_opModes.remove(id);
     }
@@ -512,12 +515,12 @@ public abstract class OpModeRobot extends RobotBase {
 
   /** Publishes the operating mode options to the driver station. */
   public void publishOpModes() {
-    DriverStation.publishOpModes();
+    RobotState.publishOpModes();
   }
 
   /** Clears all operating mode options and publishes an empty list to the driver station. */
   public void clearOpModes() {
-    DriverStation.clearOpModes();
+    RobotState.clearOpModes();
     m_opModes.clear();
   }
 
@@ -562,7 +565,7 @@ public abstract class OpModeRobot extends RobotBase {
     }
     // Scan for annotated opmode classes within the derived class's package and subpackages
     addAnnotatedOpModeClasses(getClass().getPackage());
-    DriverStation.publishOpModes();
+    RobotState.publishOpModes();
 
     HAL.reportUsage("Framework", "OpModeRobot");
   }
@@ -631,10 +634,10 @@ public abstract class OpModeRobot extends RobotBase {
 
   /** Main robot loop function. Handles disabled state logic and opmode management. */
   private void loopFunc() {
-    DriverStation.refreshData();
+    DriverStationBackend.refreshData();
 
     // Get current enabled state and opmode
-    DriverStation.refreshControlWordFromCache(m_word);
+    DriverStationBackend.refreshControlWordFromCache(m_word);
     m_watchdog.reset();
     boolean enabled = m_word.isEnabled();
     long modeId = m_word.isDSAttached() ? m_word.getOpModeId() : 0;
@@ -676,7 +679,7 @@ public abstract class OpModeRobot extends RobotBase {
             m_callbacks.addAll(m_activeOpModeCallbacks);
           }
         } else {
-          DriverStation.reportError("No OpMode found for mode " + modeId, false);
+          DriverStationErrors.reportError("No OpMode found for mode " + modeId, false);
         }
       }
       m_lastModeId = modeId;
@@ -723,7 +726,7 @@ public abstract class OpModeRobot extends RobotBase {
     }
 
     // Call nonePeriodic when no opmode is selected
-    if (DriverStation.getOpModeId() == 0) {
+    if (RobotState.getOpModeId() == 0) {
       nonePeriodic();
       m_watchdog.addEpoch("nonePeriodic()");
     }
@@ -767,7 +770,7 @@ public abstract class OpModeRobot extends RobotBase {
     }
 
     // Tell the DS that the robot is ready to be enabled
-    DriverStation.observeUserProgramStarting();
+    DriverStationBackend.observeUserProgramStarting();
 
     // Loop forever, calling the callback system which handles periodic functions
     while (true) {

@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-#include "wpi/driverstation/DriverStation.hpp"
+#include "wpi/driverstation/internal/DriverStationBackend.hpp"
 
 #include <stdint.h>
 
@@ -40,6 +40,7 @@
 #include "wpi/util/timestamp.hpp"
 
 using namespace wpi;
+using namespace wpi::internal;
 
 static constexpr int availableToCount(uint64_t available) {
   return 64 - std::countl_zero(available);
@@ -136,7 +137,8 @@ class DataLogSender {
   wpi::log::StringLogEntry m_logOpMode;
 
   bool m_logJoysticks;
-  std::array<JoystickLogSender, DriverStation::JOYSTICK_PORTS> m_joysticks;
+  std::array<JoystickLogSender, DriverStationBackend::JOYSTICK_PORTS>
+      m_joysticks;
 };
 
 struct Instance {
@@ -149,10 +151,12 @@ struct Instance {
 
   // Joystick button rising/falling edge flags
   wpi::util::mutex buttonEdgeMutex;
-  std::array<HAL_JoystickButtons, DriverStation::JOYSTICK_PORTS>
+  std::array<HAL_JoystickButtons, DriverStationBackend::JOYSTICK_PORTS>
       previousButtonStates;
-  std::array<uint32_t, DriverStation::JOYSTICK_PORTS> joystickButtonsPressed;
-  std::array<uint32_t, DriverStation::JOYSTICK_PORTS> joystickButtonsReleased;
+  std::array<uint32_t, DriverStationBackend::JOYSTICK_PORTS>
+      joystickButtonsPressed;
+  std::array<uint32_t, DriverStationBackend::JOYSTICK_PORTS>
+      joystickButtonsReleased;
 
   bool silenceJoystickWarning = false;
 
@@ -211,7 +215,7 @@ Instance::Instance() {
 
   // All joysticks should default to having zero axes, povs and buttons, so
   // uninitialized memory doesn't get sent to motor controllers.
-  for (unsigned int i = 0; i < DriverStation::JOYSTICK_PORTS; i++) {
+  for (unsigned int i = 0; i < DriverStationBackend::JOYSTICK_PORTS; i++) {
     joystickButtonsPressed[i] = 0;
     joystickButtonsReleased[i] = 0;
     previousButtonStates[i].available = 0;
@@ -225,7 +229,7 @@ Instance::~Instance() {
   }
 }
 
-bool DriverStation::GetStickButton(int stick, int button) {
+bool DriverStationBackend::GetStickButton(int stick, int button) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return false;
@@ -250,8 +254,8 @@ bool DriverStation::GetStickButton(int stick, int button) {
   return (buttons.buttons & mask) != 0;
 }
 
-std::optional<bool> DriverStation::GetStickButtonIfAvailable(int stick,
-                                                             int button) {
+std::optional<bool> DriverStationBackend::GetStickButtonIfAvailable(
+    int stick, int button) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return false;
@@ -274,7 +278,7 @@ std::optional<bool> DriverStation::GetStickButtonIfAvailable(int stick,
   return (buttons.buttons & mask) != 0;
 }
 
-bool DriverStation::GetStickButtonPressed(int stick, int button) {
+bool DriverStationBackend::GetStickButtonPressed(int stick, int button) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return false;
@@ -305,7 +309,7 @@ bool DriverStation::GetStickButtonPressed(int stick, int button) {
   return false;
 }
 
-bool DriverStation::GetStickButtonReleased(int stick, int button) {
+bool DriverStationBackend::GetStickButtonReleased(int stick, int button) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return false;
@@ -336,7 +340,7 @@ bool DriverStation::GetStickButtonReleased(int stick, int button) {
   return false;
 }
 
-double DriverStation::GetStickAxis(int stick, int axis) {
+double DriverStationBackend::GetStickAxis(int stick, int axis) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return 0.0;
@@ -360,8 +364,9 @@ double DriverStation::GetStickAxis(int stick, int axis) {
   return axes.axes[axis];
 }
 
-DriverStation::TouchpadFinger DriverStation::GetStickTouchpadFinger(
-    int stick, int touchpad, int finger) {
+TouchpadFinger DriverStationBackend::GetStickTouchpadFinger(int stick,
+                                                            int touchpad,
+                                                            int finger) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return TouchpadFinger{false, 0.0f, 0.0f};
@@ -396,8 +401,9 @@ DriverStation::TouchpadFinger DriverStation::GetStickTouchpadFinger(
   return TouchpadFinger{false, 0.0f, 0.0f};
 }
 
-bool DriverStation::GetStickTouchpadFingerAvailable(int stick, int touchpad,
-                                                    int finger) {
+bool DriverStationBackend::GetStickTouchpadFingerAvailable(int stick,
+                                                           int touchpad,
+                                                           int finger) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return false;
@@ -425,8 +431,8 @@ bool DriverStation::GetStickTouchpadFingerAvailable(int stick, int touchpad,
   return false;
 }
 
-std::optional<double> DriverStation::GetStickAxisIfAvailable(int stick,
-                                                             int axis) {
+std::optional<double> DriverStationBackend::GetStickAxisIfAvailable(int stick,
+                                                                    int axis) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return 0.0;
@@ -448,7 +454,7 @@ std::optional<double> DriverStation::GetStickAxisIfAvailable(int stick,
   return axes.axes[axis];
 }
 
-DriverStation::POVDirection DriverStation::GetStickPOV(int stick, int pov) {
+POVDirection DriverStationBackend::GetStickPOV(int stick, int pov) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return POVDirection::CENTER;
@@ -472,7 +478,7 @@ DriverStation::POVDirection DriverStation::GetStickPOV(int stick, int pov) {
   return static_cast<POVDirection>(povs.povs[pov]);
 }
 
-uint64_t DriverStation::GetStickButtons(int stick) {
+uint64_t DriverStationBackend::GetStickButtons(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return 0;
@@ -484,11 +490,11 @@ uint64_t DriverStation::GetStickButtons(int stick) {
   return buttons.buttons;
 }
 
-int DriverStation::GetStickAxesMaximumIndex(int stick) {
+int DriverStationBackend::GetStickAxesMaximumIndex(int stick) {
   return availableToCount(GetStickAxesAvailable(stick));
 }
 
-int DriverStation::GetStickAxesAvailable(int stick) {
+int DriverStationBackend::GetStickAxesAvailable(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return 0;
@@ -500,11 +506,11 @@ int DriverStation::GetStickAxesAvailable(int stick) {
   return axes.available;
 }
 
-int DriverStation::GetStickPOVsMaximumIndex(int stick) {
+int DriverStationBackend::GetStickPOVsMaximumIndex(int stick) {
   return availableToCount(GetStickPOVsAvailable(stick));
 }
 
-int DriverStation::GetStickPOVsAvailable(int stick) {
+int DriverStationBackend::GetStickPOVsAvailable(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return 0;
@@ -516,11 +522,11 @@ int DriverStation::GetStickPOVsAvailable(int stick) {
   return povs.available;
 }
 
-int DriverStation::GetStickButtonsMaximumIndex(int stick) {
+int DriverStationBackend::GetStickButtonsMaximumIndex(int stick) {
   return availableToCount(GetStickButtonsAvailable(stick));
 }
 
-uint64_t DriverStation::GetStickButtonsAvailable(int stick) {
+uint64_t DriverStationBackend::GetStickButtonsAvailable(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return 0;
@@ -532,7 +538,7 @@ uint64_t DriverStation::GetStickButtonsAvailable(int stick) {
   return buttons.available;
 }
 
-bool DriverStation::GetJoystickIsGamepad(int stick) {
+bool DriverStationBackend::GetJoystickIsGamepad(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return false;
@@ -544,7 +550,7 @@ bool DriverStation::GetJoystickIsGamepad(int stick) {
   return static_cast<bool>(descriptor.isGamepad);
 }
 
-int DriverStation::GetJoystickGamepadType(int stick) {
+int DriverStationBackend::GetJoystickGamepadType(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return -1;
@@ -556,7 +562,7 @@ int DriverStation::GetJoystickGamepadType(int stick) {
   return static_cast<int>(descriptor.gamepadType);
 }
 
-int DriverStation::GetJoystickSupportedOutputs(int stick) {
+int DriverStationBackend::GetJoystickSupportedOutputs(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
     return 0;
@@ -568,7 +574,7 @@ int DriverStation::GetJoystickSupportedOutputs(int stick) {
   return static_cast<int>(descriptor.supportedOutputs);
 }
 
-std::string DriverStation::GetJoystickName(int stick) {
+std::string DriverStationBackend::GetJoystickName(int stick) {
   if (stick < 0 || stick >= JOYSTICK_PORTS) {
     WPILIB_ReportError(warn::BadJoystickIndex, "stick {} out of range", stick);
   }
@@ -579,7 +585,7 @@ std::string DriverStation::GetJoystickName(int stick) {
   return descriptor.name;
 }
 
-bool DriverStation::IsJoystickConnected(int stick) {
+bool DriverStationBackend::IsJoystickConnected(int stick) {
   return GetStickAxesAvailable(stick) != 0 ||
          GetStickButtonsAvailable(stick) != 0 ||
          GetStickPOVsAvailable(stick) != 0;
@@ -624,23 +630,23 @@ static int32_t ConvertColorToInt(const wpi::util::Color& color) {
          (static_cast<int32_t>(color.blue * 255) & 0xff);
 }
 
-int64_t DriverStation::AddOpMode(RobotMode mode, std::string_view name,
-                                 std::string_view group,
-                                 std::string_view description,
-                                 const wpi::util::Color& textColor,
-                                 const wpi::util::Color& backgroundColor) {
+int64_t DriverStationBackend::AddOpMode(
+    RobotMode mode, std::string_view name, std::string_view group,
+    std::string_view description, const wpi::util::Color& textColor,
+    const wpi::util::Color& backgroundColor) {
   return DoAddOpMode(mode, name, group, description,
                      ConvertColorToInt(textColor),
                      ConvertColorToInt(backgroundColor));
 }
 
-int64_t DriverStation::AddOpMode(RobotMode mode, std::string_view name,
-                                 std::string_view group,
-                                 std::string_view description) {
+int64_t DriverStationBackend::AddOpMode(RobotMode mode, std::string_view name,
+                                        std::string_view group,
+                                        std::string_view description) {
   return DoAddOpMode(mode, name, group, description, -1, -1);
 }
 
-int64_t DriverStation::RemoveOpMode(RobotMode mode, std::string_view name) {
+int64_t DriverStationBackend::RemoveOpMode(RobotMode mode,
+                                           std::string_view name) {
   if (wpi::util::trim(name).empty()) {
     return 0;
   }
@@ -662,7 +668,7 @@ int64_t DriverStation::RemoveOpMode(RobotMode mode, std::string_view name) {
   return 0;
 }
 
-void DriverStation::PublishOpModes() {
+void DriverStationBackend::PublishOpModes() {
   auto& inst = ::GetInstance();
   std::scoped_lock lock{inst.opModeMutex};
   std::vector<HAL_OpModeOption> options;
@@ -673,19 +679,19 @@ void DriverStation::PublishOpModes() {
   HAL_SetOpModeOptions(options.data(), options.size());
 }
 
-void DriverStation::ClearOpModes() {
+void DriverStationBackend::ClearOpModes() {
   auto& inst = ::GetInstance();
   std::scoped_lock lock{inst.opModeMutex};
   inst.opModes.clear();
   HAL_SetOpModeOptions(nullptr, 0);
 }
 
-void DriverStation::ObserveUserProgramStarting() {
+void DriverStationBackend::ObserveUserProgramStarting() {
   ::GetInstance().userProgramStarted = true;
   HAL_ObserveUserProgramStarting();
 }
 
-int64_t DriverStation::GetOpModeId() {
+int64_t DriverStationBackend::GetOpModeId() {
   if (!::GetInstance().userProgramStarted) {
     return 0;
   }
@@ -693,7 +699,7 @@ int64_t DriverStation::GetOpModeId() {
   return GetControlWord().GetOpModeId();
 }
 
-std::string DriverStation::GetOpMode() {
+std::string DriverStationBackend::GetOpMode() {
   if (!::GetInstance().userProgramStarted) {
     return "";
   }
@@ -701,7 +707,7 @@ std::string DriverStation::GetOpMode() {
   return GetInstance().OpModeToString(GetOpModeId());
 }
 
-std::optional<std::string> DriverStation::GetGameData() {
+std::optional<std::string> DriverStationBackend::GetGameData() {
   HAL_GameData info;
   HAL_GetGameData(&info);
   std::string_view gameDataView{reinterpret_cast<char*>(info.gameData)};
@@ -711,31 +717,31 @@ std::optional<std::string> DriverStation::GetGameData() {
   return std::string(gameDataView);
 }
 
-std::string DriverStation::GetEventName() {
+std::string DriverStationBackend::GetEventName() {
   HAL_MatchInfo info;
   HAL_GetMatchInfo(&info);
   return info.eventName;
 }
 
-DriverStation::MatchType DriverStation::GetMatchType() {
+MatchType DriverStationBackend::GetMatchType() {
   HAL_MatchInfo info;
   HAL_GetMatchInfo(&info);
-  return static_cast<DriverStation::MatchType>(info.matchType);
+  return static_cast<MatchType>(info.matchType);
 }
 
-int DriverStation::GetMatchNumber() {
+int DriverStationBackend::GetMatchNumber() {
   HAL_MatchInfo info;
   HAL_GetMatchInfo(&info);
   return info.matchNumber;
 }
 
-int DriverStation::GetReplayNumber() {
+int DriverStationBackend::GetReplayNumber() {
   HAL_MatchInfo info;
   HAL_GetMatchInfo(&info);
   return info.replayNumber;
 }
 
-std::optional<DriverStation::Alliance> DriverStation::GetAlliance() {
+std::optional<Alliance> DriverStationBackend::GetAlliance() {
   int32_t status = 0;
   auto allianceStationID = HAL_GetAllianceStation(&status);
   switch (allianceStationID) {
@@ -752,7 +758,7 @@ std::optional<DriverStation::Alliance> DriverStation::GetAlliance() {
   }
 }
 
-std::optional<int> DriverStation::GetLocation() {
+std::optional<int> DriverStationBackend::GetLocation() {
   int32_t status = 0;
   auto allianceStationID = HAL_GetAllianceStation(&status);
   switch (allianceStationID) {
@@ -770,12 +776,12 @@ std::optional<int> DriverStation::GetLocation() {
   }
 }
 
-wpi::units::second_t DriverStation::GetMatchTime() {
+wpi::units::second_t DriverStationBackend::GetMatchTime() {
   int32_t status = 0;
   return wpi::units::second_t{HAL_GetMatchTime(&status)};
 }
 
-double DriverStation::GetBatteryVoltage() {
+double DriverStationBackend::GetBatteryVoltage() {
   int32_t status = 0;
   double voltage = HAL_GetVinVoltage(&status);
   WPILIB_CheckErrorStatus(status, "getVinVoltage");
@@ -789,7 +795,7 @@ double DriverStation::GetBatteryVoltage() {
  * If no new data exists, it will just be returned, otherwise
  * the data will be copied from the DS polling loop.
  */
-void DriverStation::RefreshData() {
+void DriverStationBackend::RefreshData() {
   HAL_RefreshDSData();
   auto& inst = ::GetInstance();
   {
@@ -797,7 +803,7 @@ void DriverStation::RefreshData() {
     HAL_JoystickButtons currentButtons;
     std::unique_lock lock(inst.buttonEdgeMutex);
 
-    for (int32_t i = 0; i < DriverStation::JOYSTICK_PORTS; i++) {
+    for (int32_t i = 0; i < DriverStationBackend::JOYSTICK_PORTS; i++) {
       HAL_GetJoystickButtons(i, &currentButtons);
 
       // If buttons weren't pressed and are now, set flags in m_buttonsPressed
@@ -820,25 +826,28 @@ void DriverStation::RefreshData() {
   }
 }
 
-void DriverStation::ProvideRefreshedDataEventHandle(WPI_EventHandle handle) {
+void DriverStationBackend::ProvideRefreshedDataEventHandle(
+    WPI_EventHandle handle) {
   auto& inst = ::GetInstance();
   inst.refreshEvents.Add(handle);
 }
 
-void DriverStation::RemoveRefreshedDataEventHandle(WPI_EventHandle handle) {
+void DriverStationBackend::RemoveRefreshedDataEventHandle(
+    WPI_EventHandle handle) {
   auto& inst = ::GetInstance();
   inst.refreshEvents.Remove(handle);
 }
 
-void DriverStation::SilenceJoystickConnectionWarning(bool silence) {
+void DriverStationBackend::SilenceJoystickConnectionWarning(bool silence) {
   ::GetInstance().silenceJoystickWarning = silence;
 }
 
-bool DriverStation::IsJoystickConnectionWarningSilenced() {
+bool DriverStationBackend::IsJoystickConnectionWarningSilenced() {
   return !IsFMSAttached() && ::GetInstance().silenceJoystickWarning;
 }
 
-void DriverStation::StartDataLog(wpi::log::DataLog& log, bool logJoysticks) {
+void DriverStationBackend::StartDataLog(wpi::log::DataLog& log,
+                                        bool logJoysticks) {
   auto& inst = ::GetInstance();
   // Note: cannot safely replace, because we wouldn't know when to delete the
   // "old" one. Instead do a compare and exchange with nullptr. We check first
@@ -859,10 +868,10 @@ void DriverStation::StartDataLog(wpi::log::DataLog& log, bool logJoysticks) {
 void ReportJoystickWarningV(int stick, fmt::string_view format,
                             fmt::format_args args) {
   auto& inst = GetInstance();
-  if (DriverStation::IsFMSAttached() || !inst.silenceJoystickWarning) {
+  if (DriverStationBackend::IsFMSAttached() || !inst.silenceJoystickWarning) {
     auto currentTime = Timer::GetTimestamp();
     if (currentTime > inst.nextMessageTime) {
-      if (DriverStation::IsJoystickConnected(stick)) {
+      if (DriverStationBackend::IsJoystickConnected(stick)) {
         ReportErrorV(warn::Warning, "", 0, "", format, args);
       } else {
         ReportError(

@@ -4,7 +4,8 @@
 
 package org.wpilib.framework;
 
-import org.wpilib.driverstation.DriverStation;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.driverstation.internal.DriverStationBackend;
 import org.wpilib.hardware.hal.ControlWord;
 import org.wpilib.hardware.hal.DriverStationJNI;
 import org.wpilib.hardware.hal.HAL;
@@ -236,8 +237,8 @@ public abstract class IterativeRobotBase extends RobotBase {
 
   /** Loop function. */
   protected final void loopFunc() {
-    DriverStation.refreshData();
-    DriverStation.refreshControlWordFromCache(m_word);
+    DriverStationBackend.refreshData();
+    DriverStationBackend.refreshControlWordFromCache(m_word);
     m_watchdog.reset();
 
     // Get current mode; treat disabled as unknown
@@ -344,6 +345,6 @@ public abstract class IterativeRobotBase extends RobotBase {
   }
 
   private void printLoopOverrunMessage() {
-    DriverStation.reportWarning("Loop time of " + m_period + "s overrun\n", false);
+    DriverStationErrors.reportWarning("Loop time of " + m_period + "s overrun\n", false);
   }
 }
