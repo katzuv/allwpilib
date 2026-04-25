@@ -11,6 +11,7 @@ EXAMPLE_FOLDERS = [
     "elevatorsimulation",
     "elevatortrapezoidprofile",
     "encoder",
+    "expansionhubsample",
     "gettingstarted",
     "gyro",
     "hatchbotcmdv3",
