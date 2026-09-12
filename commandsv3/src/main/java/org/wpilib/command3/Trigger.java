@@ -398,6 +398,14 @@ public class Trigger implements BooleanSupplier {
         });
   }
 
+  /**
+   * Updates the trigger's cached signal value. This is useful if the trigger's to be used in the same loop its cached
+   * signal was updated.
+   */
+  public void update() {
+    m_cachedSignal = readSignal();
+  }
+
   private void poll() {
     // Clear bindings that no longer need to run
     // This should always be checked, regardless of signal change, since bindings may be scoped
